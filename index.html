@@ -11,18 +11,19 @@
             top: 20px;
             left: 20px;
             width: 300px;
-            background: rgba(0, 0, 0, 0.85);
-            color: #fff;
+            background: rgba(10, 15, 20, 0.9); /* Fundo um pouco mais azulado/escuro */
+            color: #eee;
             padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #444;
-            font-family: 'Arial', sans-serif;
+            border-radius: 12px;
+            border: 1px solid #4cc3d9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             z-index: 10;
-            display: none; /* Começa oculto até carregar */
+            display: none;
+            box-shadow: 0 0 15px rgba(76, 195, 217, 0.3);
         }
-        #infoPanel h1 { margin-top: 0; color: #4cc3d9; text-transform: uppercase; }
-        #infoPanel p { margin: 8px 0; line-height: 1.4; font-size: 0.9rem; }
-        #infoPanel b { color: #aaa; }
+        #infoPanel h1 { margin-top: 0; color: #4cc3d9; text-transform: uppercase; font-size: 1.8rem; letter-spacing: 2px; }
+        #infoPanel p { margin: 8px 0; line-height: 1.5; font-size: 0.95rem; }
+        #infoPanel b { color: #88ccee; }
 
         /* Botões de Navegação */
         #navControls {
@@ -31,20 +32,28 @@
             width: 100%;
             text-align: center;
             z-index: 10;
+            pointer-events: none; /* Permite clicar através da área vazia */
         }
         button {
-            background: #4cc3d9;
-            color: #000;
-            border: none;
-            padding: 12px 25px;
-            margin: 0 10px;
+            background: rgba(76, 195, 217, 0.8);
+            color: #fff;
+            border: 1px solid #fff;
+            padding: 12px 30px;
+            margin: 0 15px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            border-radius: 30px;
-            transition: 0.3s;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            pointer-events: auto; /* Reativa o clique nos botões */
+            text-shadow: 0 1px 2px black;
         }
-        button:hover { background: #fff; transform: scale(1.1); }
+        button:hover { 
+            background: #fff; 
+            color: #4cc3d9; 
+            transform: scale(1.1); 
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -55,9 +64,9 @@
         <p><b>Diâmetro:</b> <span id="pSize">-</span></p>
         <p><b>Gravidade:</b> <span id="pGravity">-</span></p>
         <p><b>Luas:</b> <span id="pMoons">-</span></p>
-        <p><b>Ano de Descobrimento:</b> <span id="pDisc">-</span></p>
-        <hr style="border-color: #444;">
-        <p id="pDesc" style="font-style: italic;">Descrição...</p>
+        <p><b>Ano:</b> <span id="pDisc">-</span></p>
+        <hr style="border-color: #444; opacity: 0.5;">
+        <p id="pDesc" style="font-style: italic; color: #ccc;">Descrição...</p>
     </div>
 
     <div id="navControls">
@@ -65,17 +74,18 @@
         <button onclick="mudarPlaneta(1)">Próximo &#8594;</button>
     </div>
 
-    <a-scene loading-screen="dotsColor: white; backgroundColor: black">
+    <a-scene loading-screen="dotsColor: cyan; backgroundColor: black">
         
         <a-assets>
-            <img id="sky" src="https://cdn.eso.org/images/publicationjpg/eso0932a.jpg"> </a-assets>
+            <img id="sky" src="https://cdn.eso.org/images/publicationjpg/eso0932a.jpg">
+        </a-assets>
 
-        <a-sky src="#sky" rotation="0 -90 0"></a-sky>
+        <a-sky src="#sky" rotation="0 -90 0" color="#888"></a-sky> <a-entity light="type: ambient; color: #CCC; intensity: 0.7"></a-entity>
+        
+        <a-entity light="type: point; intensity: 1.5; distance: 500; decay: 1" position="0 0 0"></a-entity>
 
-        <a-entity light="type: ambient; color: #BBB; intensity: 0.5"></a-entity>
-        <a-entity light="type: point; intensity: 2; distance: 50; decay: 2" position="0 0 0"></a-entity>
-
-        <a-entity id="cameraRig" position="0 0 100"> <a-camera id="cam" look-controls="enabled: true"></a-camera>
+        <a-entity id="cameraRig" position="0 0 100">
+            <a-camera id="cam" look-controls="enabled: true" wasd-controls="enabled: false"></a-camera>
         </a-entity>
 
         <a-entity id="solarSystem"></a-entity>
@@ -83,110 +93,116 @@
     </a-scene>
 
     <script>
-        // --- BANCO DE DADOS DOS PLANETAS ---
-        // scale: proporção visual relativa à Terra (Terra = 1)
-        // distance: distância no eixo X para visualização
+        // Cores ajustadas para serem mais vibrantes, mas não neon
         const planetas = [
             {
                 nome: "SOL",
-                cor: "#FDB813",
-                scale: 30, // Reduzido (Real seria ~109)
+                cor: "#FFD700", // Ouro mais brilhante
+                scale: 30,
                 distancia: 0,
                 tipo: "Estrela (Anã Amarela)",
                 diametro: "1.392.700 km",
                 gravidade: "274 m/s²",
-                luas: "0 (Tem planetas)",
-                descobrimento: "Pré-história",
-                desc: "A estrela central do nosso sistema. É responsável por 99,86% da massa total do sistema solar."
+                luas: "N/A",
+                descobrimento: "-",
+                desc: "A estrela central. Responsável por 99,86% da massa do sistema. É uma bola de plasma quase perfeita.",
+                emissive: 1 // O Sol brilha totalmente
             },
             {
                 nome: "MERCÚRIO",
-                cor: "#A5A5A5",
+                cor: "#B5A896", // Cinza mais quente
                 scale: 0.38,
                 distancia: 40,
-                tipo: "Planeta Rochoso",
+                tipo: "Rochoso",
                 diametro: "4.879 km",
                 gravidade: "3.7 m/s²",
                 luas: "0",
-                descobrimento: "Pré-história",
-                desc: "O menor e mais interno planeta. Sua superfície é cheia de crateras, semelhante à Lua."
+                descobrimento: "Antiguidade",
+                desc: "O menor planeta. Temperaturas variam de 427°C de dia a -173°C à noite.",
+                emissive: 0.2
             },
             {
                 nome: "VÊNUS",
-                cor: "#E3BB76",
+                cor: "#E6C288", // Amarelo pálido mais claro
                 scale: 0.95,
                 distancia: 50,
-                tipo: "Planeta Rochoso",
+                tipo: "Rochoso",
                 diametro: "12.104 km",
                 gravidade: "8.87 m/s²",
                 luas: "0",
-                descobrimento: "Pré-história",
-                desc: "O planeta mais quente do sistema solar devido a um efeito estufa descontrolado. Gira ao contrário."
+                descobrimento: "Antiguidade",
+                desc: "Coberto por nuvens densas de ácido sulfúrico que refletem muita luz, tornando-o brilhante.",
+                emissive: 0.2
             },
             {
                 nome: "TERRA",
-                cor: "#2233AA",
+                cor: "#4F86F7", // Azul royal mais vivo
                 scale: 1,
                 distancia: 65,
-                tipo: "Planeta Rochoso",
+                tipo: "Rochoso",
                 diametro: "12.742 km",
                 gravidade: "9.8 m/s²",
-                luas: "1 (Lua)",
-                descobrimento: "Pré-história",
-                desc: "Nosso lar. O único lugar conhecido no universo capaz de sustentar vida."
+                luas: "1",
+                descobrimento: "-",
+                desc: "O único planeta conhecido com oceanos de água líquida na superfície e vida.",
+                emissive: 0.2
             },
             {
                 nome: "MARTE",
-                cor: "#C1440E",
+                cor: "#E27B58", // Vermelho terracota (menos marrom)
                 scale: 0.53,
                 distancia: 80,
-                tipo: "Planeta Rochoso",
+                tipo: "Rochoso",
                 diametro: "6.779 km",
                 gravidade: "3.71 m/s²",
-                luas: "2 (Fobos, Deimos)",
-                descobrimento: "Pré-história",
-                desc: "Conhecido como Planeta Vermelho devido ao óxido de ferro. Possui o maior vulcão do sistema solar."
+                luas: "2",
+                descobrimento: "Antiguidade",
+                desc: "Sua cor vem da ferrugem (óxido de ferro) no solo. Tem calotas polares de gelo.",
+                emissive: 0.2
             },
             {
                 nome: "JÚPITER",
-                cor: "#D8CA9D",
+                cor: "#E3DCCB", // Creme mais claro
                 scale: 11.2,
                 distancia: 120,
                 tipo: "Gigante Gasoso",
                 diametro: "139.820 km",
                 gravidade: "24.79 m/s²",
-                luas: "95 (conhecidas)",
-                descobrimento: "Pré-história",
-                desc: "O maior planeta. Uma tempestade antiga conhecida como 'A Grande Mancha Vermelha' é maior que a Terra."
+                luas: "95",
+                descobrimento: "Antiguidade",
+                desc: "Um gigante gasoso massivo. Possui um campo magnético extremamente forte.",
+                emissive: 0.2
             },
             {
                 nome: "SATURNO",
-                cor: "#EAD6B8",
+                cor: "#F4E4C1", // Bege dourado
                 scale: 9.45,
                 distancia: 180,
                 tipo: "Gigante Gasoso",
                 diametro: "116.460 km",
                 gravidade: "10.44 m/s²",
-                luas: "146 (conhecidas)",
-                descobrimento: "Pré-história",
-                desc: "Famoso por seu sistema de anéis complexo, feito principalmente de partículas de gelo e poeira.",
-                aneis: true // Flag especial
+                luas: "146",
+                descobrimento: "Antiguidade",
+                desc: "Seus anéis são feitos de bilhões de pedaços de gelo, poeira e rochas.",
+                aneis: true,
+                emissive: 0.2
             },
             {
                 nome: "URANO",
-                cor: "#D1F7F8",
+                cor: "#73E6E3", // Turquesa mais vibrante
                 scale: 4,
                 distancia: 230,
                 tipo: "Gigante de Gelo",
                 diametro: "50.724 km",
                 gravidade: "8.69 m/s²",
                 luas: "27",
-                descobrimento: "1781 (W. Herschel)",
-                desc: "Possui uma cor azul-esverdeada devido ao metano. Gira 'deitado' em sua órbita."
+                descobrimento: "1781",
+                desc: "O planeta mais frio da atmosfera, chegando a -224°C. Rola de lado no espaço.",
+                emissive: 0.3
             },
             {
                 nome: "NETUNO",
-                cor: "#5B5DDF",
+                cor: "#5060F8", // Azul índigo brilhante
                 scale: 3.88,
                 distancia: 270,
                 tipo: "Gigante de Gelo",
@@ -194,59 +210,64 @@
                 gravidade: "11.15 m/s²",
                 luas: "14",
                 descobrimento: "1846",
-                desc: "O planeta mais ventoso. Seus ventos chegam a 2.100 km/h, os mais rápidos do sistema solar."
+                desc: "Azul intenso devido ao metano. É escuro, frio e varrido por ventos supersônicos.",
+                emissive: 0.3
             }
         ];
 
-        // --- INICIALIZAÇÃO ---
         const systemContainer = document.querySelector('#solarSystem');
         const rig = document.querySelector('#cameraRig');
         let indiceAtual = 0;
 
-        // Gerar os planetas na cena
         planetas.forEach((p) => {
             const el = document.createElement('a-entity');
             el.setAttribute('position', `${p.distancia} 0 0`);
             
-            // Cria a esfera do planeta
             const sphere = document.createElement('a-sphere');
             sphere.setAttribute('radius', p.scale);
             sphere.setAttribute('color', p.cor);
-            sphere.setAttribute('segments-width', 64); // Mais suave
+            
+            // --- O SEGREDO DA COR ---
+            // 'standard' reage à luz e sombra. 
+            // 'emissive' faz o planeta brilhar um pouco na própria cor.
+            // 'emissiveIntensity' controla esse brilho (0.2 é sutil, 1 é lâmpada).
+            sphere.setAttribute('material', {
+                shader: 'standard',
+                emissive: p.cor,
+                emissiveIntensity: p.emissive || 0.2, // Sol usa 1, outros usam 0.2
+                roughness: 0.5 // Deixa menos "plástico"
+            });
+
+            sphere.setAttribute('segments-width', 64);
             sphere.setAttribute('segments-height', 64);
             
-            // Animação de rotação
             sphere.setAttribute('animation', {
                 property: 'rotation',
                 to: '0 360 0',
-                dur: p.nome === 'SOL' ? 100000 : 20000, // Sol gira devagar
+                dur: p.nome === 'SOL' ? 100000 : 25000,
                 easing: 'linear',
                 loop: true
             });
 
             el.appendChild(sphere);
 
-            // Se for Saturno, adiciona anéis
             if (p.aneis) {
                 const ring = document.createElement('a-ring');
-                ring.setAttribute('color', '#C0A080');
-                ring.setAttribute('radius-inner', p.scale * 1.2);
-                ring.setAttribute('radius-outer', p.scale * 2.2);
-                ring.setAttribute('rotation', '-45 0 0'); // Inclinação
+                ring.setAttribute('color', '#DAC6A0');
+                ring.setAttribute('radius-inner', p.scale * 1.3);
+                ring.setAttribute('radius-outer', p.scale * 2.3);
+                ring.setAttribute('rotation', '-45 0 0');
                 ring.setAttribute('side', 'double');
+                // Anéis também precisam brilhar um pouco para não sumirem na sombra
+                ring.setAttribute('material', { shader: 'standard', emissive: '#DAC6A0', emissiveIntensity: 0.2 });
                 el.appendChild(ring);
             }
 
             systemContainer.appendChild(el);
         });
 
-        // Função para atualizar a câmera e UI
         function atualizarFoco() {
             const p = planetas[indiceAtual];
-            
-            // 1. Mover Câmera
-            // Calculamos a distância ideal da câmera (z) baseada no tamanho do planeta para ele caber na tela
-            // Para o Sol precisamos ficar bem longe, para Mercúrio bem perto.
             const distCamera = Math.max(p.scale * 3.5, 4); 
             
             rig.setAttribute('animation', {
@@ -256,7 +277,6 @@
                 easing: 'easeInOutQuad'
             });
 
-            // 2. Atualizar Texto HTML
             document.getElementById('pName').innerText = p.nome;
             document.getElementById('pType').innerText = p.tipo;
             document.getElementById('pSize').innerText = p.diametro;
@@ -265,8 +285,8 @@
             document.getElementById('pDisc').innerText = p.descobrimento;
             document.getElementById('pDesc').innerText = p.desc;
             
-            // Mostrar painel
-            document.getElementById('infoPanel').style.display = 'block';
+            const infoPanel = document.getElementById('infoPanel');
+            infoPanel.style.display = 'block';
         }
 
         function mudarPlaneta(direcao) {
@@ -276,8 +296,7 @@
             atualizarFoco();
         }
 
-        // Iniciar no Sol
-        setTimeout(atualizarFoco, 1000); // Pequeno delay para carregar
+        setTimeout(atualizarFoco, 1000);
 
     </script>
 </body>
